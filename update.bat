@@ -1,0 +1,9 @@
+@echo off
+set WSID=2055027639
+set GPath=..\..\..\bin
+
+%GPath%\gmad.exe create -out .\gma.gma -warninvalid -folder "%~dp0
+%GPath%\gmpublish.exe update -id %WSID% -addon .\gma.gma
+%GPath%\gmpublish.exe update -id %WSID% -icon "%~dp0/icon.jpg"
+del .\gma.gma
+pause

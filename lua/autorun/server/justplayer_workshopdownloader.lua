@@ -52,7 +52,6 @@ function resource.AddWorkshopCollection(collectionid)
     -- Fetching Collection page
     http.Fetch("http://steamcommunity.com/sharedfiles/filedetails/?id=" .. collectionid, function(source)
         local addons = parseAddons(source)
-        local collections = parseCollections(source)
 
         -- Clientside "Mounting" of Collection items
         for k, id in ipairs(addons) do
@@ -65,8 +64,12 @@ function resource.AddWorkshopCollection(collectionid)
 
         table.insert(CollectionLoaded, collectionid)
 
-        for i, k in ipairs(collections) do
-            resource.AddWorkshopCollection(k)
+        if GetConVar("sv_addworkshopcollection_recursive"):GetBool() then
+            local collections = parseCollections(source)
+
+            for i, k in ipairs(collections) do
+                resource.AddWorkshopCollection(k)
+            end
         end
     end, function()
         error("Error while fetching collection #" .. collectionid)
@@ -82,6 +85,8 @@ concommand.Add("sv_addworkshopcollection", function(_, _, args)
         resource.AddWorkshopCollection(id)
     end
 end)
+
+CreateConVar("sv_addworkshopcollection_recursive", 0, FCVAR_ARCHIVE, "Enables Recursive addWorkshopCollection")
 
 -- We only Think once here (only then we can be sure that SteamHTTP is loaded)
 hook.Add("Think", "AddWorkShopCollection:RunQueued", function()

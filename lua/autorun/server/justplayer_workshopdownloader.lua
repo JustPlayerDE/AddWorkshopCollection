@@ -5,6 +5,23 @@
 local CollectionQueue = {} -- Here we store "paused" collections to prevent errors from http api
 local Wait = true
 
+local function parseAddons(source)
+    local source_ = string.Explode("<div class=\"workshopItem\">", source)
+    local addons = {}
+
+    -- Parsing Collection Page
+    for k, v in pairs(source_) do
+        local source__ = string.Explode("\"><div", v)
+        local insert = string.Explode("id=", source__[1])[2]
+        table.insert(addons, insert)
+    end
+
+    -- First one will be junk
+    table.remove(addons, 1)
+
+    return addons
+end
+
 function resource.AddWorkshopCollection(collectionid)
     if collectionid == nil then return end
 
@@ -17,25 +34,14 @@ function resource.AddWorkshopCollection(collectionid)
 
     -- Fetching Collection page
     http.Fetch("http://steamcommunity.com/sharedfiles/filedetails/?id=" .. collectionid, function(source)
-        local source_ = string.Explode("<div class=\"workshopItem\">", source)
-        local t = {}
-
-        -- Parsing Collection Page
-        for k, v in pairs(source_) do
-            local source__ = string.Explode("\"><div", v)
-            local insert = string.Explode("id=", source__[1])[2]
-            table.insert(t, insert)
-        end
-
-        -- First one will be junk
-        table.remove(t, 1)
+        local addons = parseAddons(source)
 
         -- Clientside "Mounting" of Collection items 
-        for k, id in ipairs(t) do
+        for k, id in ipairs(addons) do
             resource.AddWorkshop(id)
         end
 
-        print("[WORKSHOP] Added Collection " .. collectionid .. " (" .. #t .. " Addons) to Downloads.")
+        print("[WORKSHOP] Added Collection " .. collectionid .. " (" .. #addons .. " Addons) to Downloads.")
     end, function()
         error("Error while fetching collection #" .. collectionid)
 

@@ -41,6 +41,7 @@ end
 function resource.AddWorkshopCollection(collectionid)
     if collectionid == nil then return end
     if table.HasValue(CollectionLoaded, collectionid) then return end
+    table.insert(CollectionLoaded, collectionid)
 
     if Wait then
         table.insert(CollectionQueue, collectionid)
@@ -61,8 +62,6 @@ function resource.AddWorkshopCollection(collectionid)
         if #addons > 0 then
             print("[WORKSHOP] Added Collection " .. collectionid .. " (" .. #addons .. " Addons) to Downloads.")
         end
-
-        table.insert(CollectionLoaded, collectionid)
 
         if GetConVar("sv_addworkshopcollection_recursive"):GetBool() then
             local collections = parseCollections(source)

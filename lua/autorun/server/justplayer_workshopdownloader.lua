@@ -3,6 +3,7 @@
  Created by JustPlayerDE ( https://steamcommunity.com/id/justplayerde/ )
 ]]
 local CollectionQueue = {} -- Here we store "paused" collections to prevent errors from http api
+local CollectionLoaded = {} -- To prevent a loop of endless addworkshopcollections (and spamming steam api)
 local Wait = true
 
 local function parseAddons(source)
@@ -22,8 +23,24 @@ local function parseAddons(source)
     return addons
 end
 
+local function parseCollections(source)
+    local source_ = string.Explode("<div class=\"collectionChildren\">", source)[3] or ""
+    local collections = {}
+
+    for s in string.gmatch(source_, "id=[%d]+") do
+        local id = string.sub(s, 4)
+
+        if not table.HasValue(collections, id) then
+            table.insert(collections, id)
+        end
+    end
+
+    return collections
+end
+
 function resource.AddWorkshopCollection(collectionid)
     if collectionid == nil then return end
+    if table.HasValue(CollectionLoaded, collectionid) then return end
 
     if Wait then
         table.insert(CollectionQueue, collectionid)
@@ -35,13 +52,22 @@ function resource.AddWorkshopCollection(collectionid)
     -- Fetching Collection page
     http.Fetch("http://steamcommunity.com/sharedfiles/filedetails/?id=" .. collectionid, function(source)
         local addons = parseAddons(source)
+        local collections = parseCollections(source)
 
-        -- Clientside "Mounting" of Collection items 
+        -- Clientside "Mounting" of Collection items
         for k, id in ipairs(addons) do
             resource.AddWorkshop(id)
         end
 
-        print("[WORKSHOP] Added Collection " .. collectionid .. " (" .. #addons .. " Addons) to Downloads.")
+        if #addons > 0 then
+            print("[WORKSHOP] Added Collection " .. collectionid .. " (" .. #addons .. " Addons) to Downloads.")
+        end
+
+        table.insert(CollectionLoaded, collectionid)
+
+        for i, k in ipairs(collections) do
+            resource.AddWorkshopCollection(k)
+        end
     end, function()
         error("Error while fetching collection #" .. collectionid)
 

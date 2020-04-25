@@ -40,8 +40,6 @@ end
 
 function resource.AddWorkshopCollection(collectionid)
     if collectionid == nil then return end
-    if table.HasValue(CollectionLoaded, collectionid) then return end
-    table.insert(CollectionLoaded, collectionid)
 
     if Wait then
         table.insert(CollectionQueue, collectionid)
@@ -49,6 +47,9 @@ function resource.AddWorkshopCollection(collectionid)
 
         return
     end
+
+    if table.HasValue(CollectionLoaded, collectionid) then return end
+    table.insert(CollectionLoaded, collectionid)
 
     -- Fetching Collection page
     http.Fetch("http://steamcommunity.com/sharedfiles/filedetails/?id=" .. collectionid, function(source)

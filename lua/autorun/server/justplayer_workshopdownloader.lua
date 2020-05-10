@@ -7,18 +7,13 @@ local CollectionLoaded = {} -- To prevent a loop of endless addworkshopcollectio
 local Wait = true
 
 local function parseAddons(source)
-    local source_ = string.Explode("<div class=\"workshopItem\">", source)
     local addons = {}
 
     -- Parsing Collection Page
-    for k, v in pairs(source_) do
-        local source__ = string.Explode("\"><div", v)
-        local insert = string.Explode("id=", source__[1])[2]
-        table.insert(addons, insert)
+    for k, v in source:gmatch("SubscribeItemBtn%d+") do
+        local id, _ = k:gsub("SubscribeItemBtn", "")
+        table.insert(addons, id)
     end
-
-    -- First one will be junk
-    table.remove(addons, 1)
 
     return addons
 end
@@ -27,7 +22,7 @@ local function parseCollections(source)
     local source_ = string.Explode("<div class=\"collectionChildren\">", source)[3] or ""
     local collections = {}
 
-    for s in string.gmatch(source_, "id=[%d]+") do
+    for s in source_:gmatch("id=[%d]+") do
         local id = string.sub(s, 4)
 
         if not table.HasValue(collections, id) then

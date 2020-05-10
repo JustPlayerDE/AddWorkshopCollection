@@ -3,7 +3,6 @@
  Created by JustPlayerDE ( https://steamcommunity.com/id/justplayerde/ )
 ]]
 local CollectionQueue = {} -- Here we store "paused" collections to prevent errors from http api
-local CollectionLoaded = {} -- To prevent a loop of endless addworkshopcollections (and spamming steam api)
 local Wait = true
 
 local function parseAddons(source)
@@ -33,8 +32,9 @@ local function parseCollections(source)
     return collections
 end
 
-function resource.AddWorkshopCollection(collectionid)
+function resource.AddWorkshopCollection(collectionid, _recursive)
     if collectionid == nil then return end
+    _recursive = _recursive or {}
 
     if Wait then
         table.insert(CollectionQueue, collectionid)
@@ -43,8 +43,8 @@ function resource.AddWorkshopCollection(collectionid)
         return
     end
 
-    if table.HasValue(CollectionLoaded, collectionid) then return end
-    table.insert(CollectionLoaded, collectionid)
+    if table.HasValue(_recursive, collectionid) then return end
+    table.insert(_recursive, collectionid)
 
     -- Fetching Collection page
     http.Fetch("http://steamcommunity.com/sharedfiles/filedetails/?id=" .. collectionid, function(source)
@@ -63,7 +63,7 @@ function resource.AddWorkshopCollection(collectionid)
             local collections = parseCollections(source)
 
             for i, k in ipairs(collections) do
-                resource.AddWorkshopCollection(k)
+                resource.AddWorkshopCollection(k, _recursive)
             end
         end
     end, function()

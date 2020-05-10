@@ -9,8 +9,8 @@ local function parseAddons(source)
     local addons = {}
 
     -- Parsing Collection Page
-    for k, v in source:gmatch("SubscribeItemBtn%d+") do
-        local id, _ = k:gsub("SubscribeItemBtn", "")
+    for s in source:gmatch("SubscribeItemBtn%d+") do
+        local id = s:gsub("SubscribeItemBtn", "")
         table.insert(addons, id)
     end
 
@@ -22,7 +22,7 @@ local function parseCollections(source)
     local collections = {}
 
     for s in source_:gmatch("id=[%d]+") do
-        local id = string.sub(s, 4)
+        local id = s:gsub("id=", "")
 
         if not table.HasValue(collections, id) then
             table.insert(collections, id)

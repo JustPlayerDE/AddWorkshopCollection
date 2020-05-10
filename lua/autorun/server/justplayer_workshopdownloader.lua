@@ -2,8 +2,7 @@
  A little more advanced Workshop collection "downloader"
  Created by JustPlayerDE ( https://steamcommunity.com/id/justplayerde/ )
 ]]
-local CollectionQueue = {} -- Here we store "paused" collections to prevent errors from http api
-local Wait = true
+local CollectionQueue = {} -- All collections are put here to wait for SteamHTTP starting up
 
 local function parseAddons(source)
     local addons = {}
@@ -36,7 +35,7 @@ function resource.AddWorkshopCollection(collectionid, _recursive)
     if collectionid == nil then return end
     _recursive = _recursive or {}
 
-    if Wait then
+    if CollectionQueue ~= nil then
         table.insert(CollectionQueue, collectionid)
         print("[WORKSHOP] Queued Collection #" .. collectionid .. " for later.")
 
@@ -83,16 +82,14 @@ end)
 
 CreateConVar("sv_addworkshopcollection_recursive", 0, FCVAR_ARCHIVE, "Enables Recursive addWorkshopCollection")
 
--- We only Think once here (only then we can be sure that SteamHTTP is loaded)
+-- As soon as the Think gets called SteamHTTP Should exists.
 hook.Add("Think", "AddWorkShopCollection:RunQueued", function()
-    Wait = false
-    hook.Remove("Think", "AddWorkShopCollection:RunQueued")
+    hook.Remove("Think", "AddWorkShopCollection:RunQueued") -- To prevent running it more than once.
     print("[WORKSHOP] Running AddWorkshopCollection Queue..")
+    local queue = CollectionQueue
+    CollectionQueue = nil -- Disable Queue
 
-    for k, id in ipairs(CollectionQueue) do
+    for k, id in ipairs(queue) do
         resource.AddWorkshopCollection(id)
     end
-
-    -- "Empty Bin"
-    CollectionQueue = nil
 end)

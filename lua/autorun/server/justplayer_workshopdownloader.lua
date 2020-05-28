@@ -20,6 +20,16 @@ function resource.AddWorkshopCollection(...)
         collectionIds[#collectionIds] = nil -- Remove the recursive table from the ids list
     end
 
+    -- Removal of invalid IDs
+    for i = 1, #collectionIds do
+        local ID = collectionIds[i]
+
+        if not tonumber(ID) then
+            print("[WORKSHOP] Ignored '" .. ID .. "' as its not an Valid workshop id.")
+            collectionIds[i] = nil -- Remove it!
+        end
+    end
+
     local Collections = {}
     local Addons = {}
     if #collectionIds <= 0 then return end
@@ -30,8 +40,6 @@ function resource.AddWorkshopCollection(...)
 
     for i = 0, #collectionIds - 1 do
         local ID = collectionIds[i + 1]
-        -- We dont want invalid Workshop IDs here
-        assert(tonumber(ID), "Invalid Workshop Collection id: " .. ID)
         POST["publishedfileids[" .. i .. "]"] = tostring(ID)
     end
 
@@ -59,11 +67,7 @@ function resource.AddWorkshopCollection(...)
 
                 if Item.filetype == COLLECTION then
                     -- Prevent adding already added collections
-                    if table.HasValue(recursive, Item.publishedfileid) then
-
-                        return
-                    end
-
+                    if table.HasValue(recursive, Item.publishedfileid) then return end
                     table.insert(recursive, Item.publishedfileid)
                     -- Otherwise add them to the collection list
                     table.insert(Collections, Item.publishedfileid)

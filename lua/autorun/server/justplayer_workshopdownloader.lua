@@ -3,35 +3,33 @@
  Created by JustPlayerDE ( https://steamcommunity.com/id/justplayerde/ )
 
  Thanks to Tom.bat for pointing out that there is actually an API 
+ And Thanks to Owain for helping me out with a more clean code :D
 ]]
 local CollectionQueue = {} -- All collections are put here to wait for SteamHTTP starting up
 local ADDON, COLLECTION = 0, 2
 
-function resource.AddWorkshopCollection(collectionIds, _recursiveprotection)
+function resource.AddWorkshopCollection(...)
+    local collectionIds = {...}
+    local recursive = {}
     if collectionIds == nil then return end
-    _recursiveprotection = _recursiveprotection or {}
-    local _Collections = {}
+
+    -- Thanks to Owain :) (ill put it here almost like he explained it so everyone can understand it)
+    -- Check if the last argument is the recursive table
+    if istable(collectionIds[#collectionIds]) then
+        recursive = collectionIds[#collectionIds] -- Set the recursive table to the last argument
+        collectionIds[#collectionIds] = nil -- Remove the recursive table from the ids list
+    end
+
     local Collections = {}
     local Addons = {}
-
-    if isstring(collectionIds) then
-        collectionIds = tonumber(collectionIds)
-    end
-
-    if isnumber(collectionIds) then
-        table.insert(_Collections, collectionIds)
-    else
-        _Collections = collectionIds
-    end
-
-    if #_Collections <= 0 then return end
+    if #collectionIds <= 0 then return end
 
     local POST = {
-        ["collectioncount"] = tostring(#_Collections)
+        ["collectioncount"] = tostring(#collectionIds)
     }
 
-    for i = 0, #_Collections - 1 do
-        local ID = _Collections[i + 1]
+    for i = 0, #collectionIds - 1 do
+        local ID = collectionIds[i + 1]
         -- We dont want invalid Workshop IDs here
         assert(tonumber(ID), "Invalid Workshop Collection id: " .. ID)
         POST["publishedfileids[" .. i .. "]"] = tostring(ID)
@@ -61,8 +59,12 @@ function resource.AddWorkshopCollection(collectionIds, _recursiveprotection)
 
                 if Item.filetype == COLLECTION then
                     -- Prevent adding already added collections
-                    if table.HasValue(_recursiveprotection, Item.publishedfileid) then return end
-                    table.insert(_recursiveprotection, Item.publishedfileid)
+                    if table.HasValue(recursive, Item.publishedfileid) then
+
+                        return
+                    end
+
+                    table.insert(recursive, Item.publishedfileid)
                     -- Otherwise add them to the collection list
                     table.insert(Collections, Item.publishedfileid)
                 end
@@ -75,17 +77,17 @@ function resource.AddWorkshopCollection(collectionIds, _recursiveprotection)
         end
 
         if #Addons > 0 then
-            print("[WORKSHOP] Added " .. #_Collections .. " Collection(s) (Total " .. #Addons .. " Addons) to Downloads.")
+            print("[WORKSHOP] Added " .. #collectionIds .. " Collection(s) (Total " .. #Addons .. " Addons) to Downloads.")
         end
 
         -- Recursive AddWorkshopCollection
         if GetConVar("sv_addworkshopcollection_recursive"):GetBool() then
             for i, collectionid in ipairs(Collections) do
-                resource.AddWorkshopCollection(collectionid, _recursiveprotection)
+                resource.AddWorkshopCollection(collectionid, recursive)
             end
         end
     end, function(error)
-        error("Error while fetching collection(s) " .. table.concat(_Collections, ",") .. " Error: " .. error)
+        error("Error while fetching collection(s) " .. table.concat(collectionIds, ",") .. " Error: " .. error)
 
         return false
     end)
@@ -96,7 +98,7 @@ end
 -- usage: sv_addworkshopcollection <collection ids>
 -- Example: sv_addworkshopcollection 1 2 3 4 (...)
 concommand.Add("sv_addworkshopcollection", function(_, _, args)
-    resource.AddWorkshopCollection(args)
+    resource.AddWorkshopCollection(unpack(args))
 end)
 
 CreateConVar("sv_addworkshopcollection_recursive", 0, FCVAR_ARCHIVE, "Enables Recursive addWorkshopCollection")
@@ -107,5 +109,5 @@ hook.Add("Think", "AddWorkShopCollection:RunQueued", function()
     print("[WORKSHOP] Running AddWorkshopCollection Queue..")
     local queue = CollectionQueue
     CollectionQueue = nil -- Disable Queue
-    resource.AddWorkshopCollection(queue)
+    resource.AddWorkshopCollection(unpack(queue))
 end)

@@ -1,6 +1,8 @@
 --[[
  A little more advanced Workshop collection "downloader"
  Created by JustPlayerDE ( https://steamcommunity.com/id/justplayerde/ )
+
+ Thanks to Tom.bat for pointing out that there is actually an API 
 ]]
 local CollectionQueue = {} -- All collections are put here to wait for SteamHTTP starting up
 

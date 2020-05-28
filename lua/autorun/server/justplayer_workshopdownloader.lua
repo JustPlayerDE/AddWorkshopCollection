@@ -91,8 +91,6 @@ function resource.AddWorkshopCollection(collectionIds, _recursiveprotection)
     end)
 end
 
-print("============")
-
 --resource.AddWorkshopCollection(1754190594)
 --resource.AddWorkshopCollection({1754190594 , 1915277996})
 -- usage: sv_addworkshopcollection <collection ids>
